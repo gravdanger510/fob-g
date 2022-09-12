@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to Firebase Hosting</title>
+
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/9.9.4/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/9.9.4/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/9.9.4/firebase-performance-compat.js"></script>
+    <!--
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+  </head>
+  <body>
+    <main class="container">
+      <div class="form">
+        <form class="song-form" action="index.html" method="post" >
+          <input type="text" id="lyrics" name="lyrics" placeholder="We're only liars but we're the best">
+          <input type="number" id="num-lines" name="num-lines" placeholder="1">
+          <label for="is-chorus">Is this from a chorus?</label>
+          <input type="checkbox" id="is-chorus" name="is-chorus">
+          <input type="text" id="album" name="ablums" placeholder="From which album?">
+          <select name="vowel" id="vowel">
+            <option value="iː">iː: See, ski</option>
+            <option value="I">I: Big, busy, England</option>
+            <option value="ʊ">ʊ: Full, woman</option>
+            <option value="uː">uː: Who, music</option>
+            <option value="e">e: Egg, head</option>
+            <option value="ə">ə: The, popular</option>
+            <option value="ɜː">ɜː: Person, bird</option>
+            <option value="ɔː">ɔː: For, saw, door, walk</option>
+            <option value="æ">æ: Apple</option>
+            <option value="ʌ">ʌ: Sun, money</option>
+            <option value="aː">aː: Car, aunt, heart</option>
+            <option value="ɒ">ɒ: Dog, watch</option>
+            <option value="ɪə">ɪə: Ear, idea</option>
+            <option value="eɪ">eɪ: Cake, they</option>
+            <option value="ʊə">ʊə: Tour, Europe</option>
+            <option value="ɔɪ">ɔɪ: Boy, voice</option>
+            <option value="əʊ">əʊ: Open, coat</option>
+            <option value="eə">eə: Hair, their</option>
+            <option value="aɪ">aɪ: Time, Fly</option>
+            <option value="aʊ">aʊ: Now, house</option>
+          </select>
+          <input type="button" id="submit" value="Add this line">
+        </form>
+      </div>
+      <div id="song">
+
+      </div>
+    </main>
+    <!-- <p id="load">Firebase SDK Loading&hellip;</p> -->
+
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.4/firebase-app.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAqpTqK_ScwAQtW_YtCcY1V1XSbMm7g_Ss",
+        authDomain: "fallout-generator.firebaseapp.com",
+        databaseURL: "https://fallout-generator-default-rtdb.firebaseio.com",
+        projectId: "fallout-generator",
+        storageBucket: "fallout-generator.appspot.com",
+        messagingSenderId: "557295669975",
+        appId: "1:557295669975:web:cb6628e095da67ee469692"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig),
+      database = firebase.database();
+
+      function addLine() {
+        // debugger;
+        var lyrics = document.getElementById('lyrics').value,
+            lines = document.getElementById('num-lines').value,
+            chorus = document.getElementById('is-chorus').checked,
+            vowel = document.getElementById('vowel').value,
+            chorusCheck = chorus ? 'chorus ' : 'verse ';
+
+        //database writing
+        database.ref('lines/').push({
+          lyrics: lyrics,
+          numLines: lines,
+          isChorus: chorus,
+          vowel: vowel
+          }, function(error) {
+          if (error) {
+            alert('WHOOPSIES, Try again');
+          } else {
+            console.log('Added a ' + lines + " bar long " + chorusCheck + ' that ends in ' + vowel + ' to the database');
+          }
+        })
+      }
+      document.getElementById('submit').addEventListener('click', addLine);
+
+      //Songwriting
+      const song = document.getElementById('song');
+      // – Verse
+      function writeChorus(chorusType, verseLength, rhymeType) {
+        firebase.database().ref('/lines').once('value', function(snapshot){
+
+          var allVerses = Object.values(snapshot.val()),
+          verse = "",
+          lastVowel = "";
+
+          for(let i = 0; i < verseLength;) {
+            var rand = Math.floor(Math.random() * (allVerses.length - 1)),
+            randomLine = allVerses[rand];
+
+            //Check if this line is from a verse or a Chorus
+            //Make sure line doesn't take up too much space
+            if (randomLine.isChorus==chorusType && i + Number(randomLine.numLines) <=4) {
+
+              switch (rhymeType) {
+                case "even":
+
+                  break;
+                case "lastTwo":
+                  //rhyme the last two lines
+                  if (i==verseLength-1  && randomLine.vowel==lastVowel){
+                    console.log('matching line!');
+                    verse += randomLine.lyrics + "</br>";
+                    lastVowel = randomLine.vowel;
+                    i += Number(randomLine.numLines);
+                  } else if (i==verseLength-1  && randomLine.vowel!=lastVowel){
+                    console.log('this line dont rhyme like it should');
+                  } else {
+                    verse += randomLine.lyrics + "</br>";
+                    lastVowel = randomLine.vowel;
+                    i += Number(randomLine.numLines);
+                  }
+                  break;
+                default:
+                  verse += randomLine.lyrics + "</br>";
+                  lastVowel = randomLine.vowel;
+                  i += Number(randomLine.numLines);
+
+              }
+
+            }
+          }
+          var verseP = document.createElement('p'),
+          verseHeader = document.createElement('h2');
+
+          verseHeader.innerHTML = chorusType ? 'chorus' : 'verse';
+          verseP.innerHTML = verse;
+
+          song.appendChild(verseHeader);
+          song.appendChild(verseP);
+        });
+      }
+
+      writeChorus(false, 4, "lastTwo");
+    </script>
+    <script>
+
+    </script>
+  </body>
+</html>
